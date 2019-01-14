@@ -98,6 +98,9 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
+
+# ubuntu 
+.idea
 /site
 
 # mypy
