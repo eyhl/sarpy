@@ -1,9 +1,8 @@
 
 import numpy as np
 import xml.etree.ElementTree
+import warnings
 # import rasterio
-# import warnings
-
 
 def _load_calibration(path):
     '''
@@ -13,7 +12,12 @@ def _load_calibration(path):
     output:
     '''
     # open xml file
-    tree = xml.etree.ElementTree.parse(path)
+    try:
+        tree = xml.etree.ElementTree.parse(path)
+    except:
+        warnings.warn('Calibration xml-file not found')
+        return None, None
+
     root = tree.getroot()
 
     # Gets info
@@ -25,7 +29,7 @@ def _load_calibration(path):
     if root[2].tag == "calibrationVectorList":
         calvectors = root[2]
     else:
-        print('No calibration list found')
+        warnings.warn('Calibration list not found in xml-file')
         return None, info
 
     azimuth_time = np.array([], dtype=np.datetime64)
@@ -56,10 +60,10 @@ def _load_calibration(path):
 
     # Combine calibration info
     calibration = {
-        "abs_calibration_const": root[1][0],
-        "azimuth_time": azimuth_time,
+        "abs_calibration_const": float(root[1][0].text),
         "row": line,
         "col": pixel,
+        "azimuth_time": azimuth_time,
         "sigma_0": sigma_0,
         "beta_0": beta_0,
         "gamma": gamma,
@@ -67,6 +71,12 @@ def _load_calibration(path):
     }
 
     return calibration, info
+
+
+folder = '/home/simon/Desktop/dev_sarpy/test_data/S1A_IW_GRDH_1SDV_20181009T171427_20181009T171452_024062_02A131_E887.SAFE/'
+calVH = 'annotation/calibration/calibration-s1a-iw-grd-vh-20181009t171427-20181009t171452-024062-02a131-002.xml'
+
+test_cal, test_info = _load_calibration(folder + calVH)
 
 
 #def _load_annotation(path):
