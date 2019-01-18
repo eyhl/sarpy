@@ -4,9 +4,16 @@ Open source libary for prossing SAR images as python objects. Should be easy and
 
 Environment for developing: conda create -n dev_sarpy numpy matplotlib rasterio scipy jupyter
 
+## Dependencies
+* numpy
+* rasterio
+* lxml
+
+
 ## vision/ideas for developing
 * Install with conda-forge
 * Open source
+* Sarpy is not an API. The data and functions are avalible in python
 * Few dependencies (numpy, scipy, Gdal/rasterio, matplotlib,)
 * Cython/c backend for function that requires to loop through the pixels.
 * Mainly SAR Specific functions (Functions purely related to signal processing should be implemented in scipy or equivalent )
