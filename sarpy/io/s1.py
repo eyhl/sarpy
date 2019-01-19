@@ -108,32 +108,33 @@ def _load_meta(SAFE_path):
     Returns:
         metadata: A dictionary with meta_data
             example:
-            {'nssdc_identifier': '2014-016A',
-             'mission': 'SENTINEL-1A',
-             'orbit_number': array([24062, 24062]),
-             'relative_orbit_number': array([15, 15]),
-             'phase_identifier': 1,
-             'start_time': datetime.datetime(2018, 10, 9, 17, 14, 27, 947118),
-             'stop_time': datetime.datetime(2018, 10, 9, 17, 14, 52, 945363),
-             'pass': 'ASCENDING',
-             'ascending_node_time': datetime.datetime(2018, 10, 9, 17, 2, 49, 152100),
-             'start_time_ANX': 698795.0,
-             'stop_time_ANX': 723793.2,
-             'mode': 'IW',
-             'swath': 'IW',
-             'instrument_config': 6,
-             'mission_data_ID': '172337',
-             'polarisation': ['VV', 'VH'],
+            {'mode': 'EW',
+             'swath': ['EW'],
+             'instrument_config': 1,
+             'mission_data_ID': '110917',
+             'polarisation': ['HH', 'HV'],
              'product_class': 'S',
              'product_composition': 'Slice',
              'product_type': 'GRD',
              'product_timeliness': 'Fast-24h',
              'slice_product_flag': 'true',
-             'segment_start_time': datetime.datetime(2018, 10, 9, 17, 11, 29, 245933),
-             'slice_number': 8,
-             'total_slices': 16,
-             'footprint': {'latitude': array([44.361824, 44.361824, 44.361824, 44.361824]),
-              'longitude': array([8.145285, 8.145285, 8.145285, 8.145285])}}
+             'segment_start_time': datetime.datetime(2019, 1, 17, 19, 12, 32, 164986),
+             'slice_number': 4,
+             'total_slices': 4,
+             'footprint': {'latitude': array([69.219566, 69.219566, 69.219566, 69.219566]),
+                            'longitude': array([-35.149223, -35.149223, -35.149223, -35.149223])},
+             'nssdc_identifier': '2016-025A',
+             'mission': 'SENTINEL-1B',
+             'orbit_number': array([14538, 14538]),
+             'relative_orbit_number': array([162, 162]),
+             'cycle_number': 89,
+             'phase_identifier': 1,
+             'start_time': datetime.datetime(2019, 1, 17, 19, 15, 36, 268585),
+             'stop_time': datetime.datetime(2019, 1, 17, 19, 16, 25, 598196),
+             'pass': 'ASCENDING',
+             'ascending_node_time': datetime.datetime(2019, 1, 17, 18, 57, 16, 851007),
+             'start_time_ANX': 1099418.0,
+             'stop_time_ANX': 1148747.0}
 
             error: List of dictionary keys that was not found.
     """
@@ -186,6 +187,13 @@ def _load_meta(SAFE_path):
         metadata['relative_orbit_number'] = np.array([int(values[0].text), int(values[1].text)])
     else:
         error.append('relative_orbit_number')
+
+    # get cycle_number
+    values = [elem for elem in safe_xml.iterfind(".//" + prefix1 + 'cycleNumber')]
+    if len(values) == 1:
+        metadata['cycle_number'] = int(values[0].text)
+    else:
+        error.append('cycle_number')
 
     # get phase_identifier
     values = [elem for elem in safe_xml.iterfind(".//" + prefix1 + 'phaseIdentifier')]
@@ -251,8 +259,8 @@ def _load_meta(SAFE_path):
 
     # get swath
     values = [elem for elem in safe_xml.iterfind(".//" + prefix3 + 'swath')]
-    if len(values) == 1:
-        metadata['swath'] = values[0].text
+    if len(values) > 0:
+        metadata['swath'] = [child.text for child in values]
     else:
         error.append('swath')
 
@@ -272,8 +280,8 @@ def _load_meta(SAFE_path):
 
     # get polarisation
     values = [elem for elem in safe_xml.iterfind(".//" + prefix3 + 'transmitterReceiverPolarisation')]
-    if len(values) == 2:
-        metadata['polarisation'] = [values[0].text, values[1].text]
+    if len(values) > 0:
+        metadata['polarisation'] = [child.text for child in values]
     else:
         error.append('polarisation')
 
