@@ -19,8 +19,8 @@ def _load_calibration(path):
         calibration: A dictionary with calibration constants
             {"abs_calibration_const": float(),
             "row": np.array(int),
-            "col": np.array(int),
-            "azimuth_time": np.array(np.datetime64),
+            "column": np.array(int),
+            "azimuth_time": np.array(datetime64[us]),
             "sigma_0": np.array(float),
             "beta_0": np.array(float),
             "gamma": np.array(float),
@@ -54,7 +54,7 @@ def _load_calibration(path):
         return None, info
 
     # initialize arrays
-    azimuth_time = np.array([], dtype=np.datetime64)
+    azimuth_time = np.array([], dtype='datetime64[us]')
     line = np.array([], dtype=int)
     pixel = np.array([], dtype=int)
     sigma_0 = np.array([], dtype=float)
@@ -85,7 +85,7 @@ def _load_calibration(path):
     calibration = {
         "abs_calibration_const": float(root[1][0].text),
         "row": line,
-        "col": pixel,
+        "column": pixel,
         "azimuth_time": azimuth_time,
         "sigma_0": sigma_0,
         "beta_0": beta_0,
@@ -361,6 +361,93 @@ def _load_meta(SAFE_path):
     return metadata, error
 
 
-#def _load_annotation(path):
+def _load_annotation(path):
+    """Load sentinel 1 annotation file as dictionary from PATH.
 
-#    return annotation, info
+     The annotation file should be as included in .SAFE format
+     retrieved from: https://scihub.copernicus.eu/
+
+     Note that the file contains more information. Only the relevant have been chosen
+
+     Args:
+         path: The path to the annotation file
+
+     Returns:
+         geo_locations: A dictionary with geo location tie-points
+             {'azimuth_time': np.array(datetime64[us]),
+            'slant_range_time': np.array(float),
+            'row': np.array(int),
+            'column': np.array(int),
+            'latitude': np.array(float),
+            'longitude': np.array(float),
+            'height': np.array(float),
+            'incidence_angle': np.array(float),
+            'elevation_angle': np.array(float)}
+
+         info: A dictionary with the meta data given in 'adsHeader'
+             {child[0].tag: child[0].text,
+              child[1].tag: child[1].text,
+              ...}
+     """
+
+    # open xml file
+    tree = xml.etree.ElementTree.parse(path)
+    root = tree.getroot()
+
+    # Find info
+    info_xml = root.findall('adsHeader')
+    if len(info_xml) == 1:
+        info = {}
+        for child in info_xml[0]:
+            info[child.tag] = child.text
+    else:
+        warnings.warn('Warning adsHeader not found')
+        info = None
+
+    # Find goe location list
+    geo_points = root.findall('geolocationGrid')
+    if len(geo_points) == 1:
+        geo_points = geo_points[0][0]
+    else:
+        warnings.warn('Warning geolocationGrid not found')
+        return None, None
+
+    # initialize arrays
+    n_points = len(geo_points)
+    azimuth_time = np.empty(n_points, dtype='datetime64[us]')
+    slant_range_time = np.zeros(n_points, dtype=float)
+    line = np.zeros(n_points, dtype=int)
+    pixel = np.zeros(n_points, dtype=int)
+    latitude = np.zeros(n_points, dtype=float)
+    longitude = np.zeros(n_points, dtype=float)
+    height = np.zeros(n_points, dtype=float)
+    incidence_angle = np.zeros(n_points, dtype=float)
+    elevation_angle = np.zeros(n_points, dtype=float)
+
+    for i in range(0, n_points):
+        point = geo_points[i]
+
+        azimuth_time[i] = np.datetime64(point[0].text)
+        slant_range_time[i] = float(point[1].text)
+        line[i] = int(point[2].text)
+        pixel[i] = int(point[3].text)
+        latitude[i] = float(point[4].text)
+        longitude[i] = float(point[5].text)
+        height[i] = float(point[6].text)
+        incidence_angle[i] = float(point[7].text)
+        elevation_angle[i] = float(point[8].text)
+
+    # Combine calibration info
+    geo_locations = {
+        'azimuth_time': azimuth_time,
+        'slant_range_time': slant_range_time,
+        'row': line,
+        'column': pixel,
+        'latitude': latitude,
+        'longitude': longitude,
+        'height': height,
+        'incidence_angle': incidence_angle,
+        'elevation_angle': elevation_angle
+    }
+
+    return geo_locations, info
