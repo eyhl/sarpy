@@ -11,7 +11,7 @@ Open source libary for prossing SAR images as python objects. Should be easy and
 * Load data from Sentinel 1 (GRDH and SLC) & and other mission into sarpy object. Also load sarpy files
  * Easy access data as numpy.
  * Easy access meta data.
-* A back-end of function operating on and returning numpy arrays
+* A back-end of function operating on and returning nuedgempy arrays
 * Version 2 ideas
   * A wrapper to use the functions in Q-Gis.
   * GPU compatible
@@ -29,3 +29,4 @@ Open source libary for prossing SAR images as python objects. Should be easy and
   * In-SAR, inferogram
   * In-SAR, coherence
   * SIMPLE plot fuctions
+* Class to work with coregistred images as a time-series
