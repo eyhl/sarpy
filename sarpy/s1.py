@@ -4,7 +4,6 @@ import xml.etree.ElementTree
 import warnings
 import datetime
 import lxml.etree
-# import rasterio
 
 def _load_calibration(path):
     """Load sentinel 1 calibration file as dictionary from PATH.
@@ -350,7 +349,7 @@ def _load_meta(SAFE_path):
         lat = np.zeros(4)
         lon = np.zeros(4)
         for i in range(0, len(coordinates)):
-            coord_i = coordinates[0].split(',')
+            coord_i = coordinates[i].split(',')
             lat[i] = float(coord_i[0])
             lon[i] = float(coord_i[1])
         footprint = {'latitude': lat, 'longitude': lon}
@@ -404,7 +403,7 @@ def _load_annotation(path):
         warnings.warn('Warning adsHeader not found')
         info = None
 
-    # Find goe location list
+    # Find geo location list
     geo_points = root.findall('geolocationGrid')
     if len(geo_points) == 1:
         geo_points = geo_points[0][0]
@@ -424,6 +423,7 @@ def _load_annotation(path):
     incidence_angle = np.zeros(n_points, dtype=float)
     elevation_angle = np.zeros(n_points, dtype=float)
 
+    # get the data
     for i in range(0, n_points):
         point = geo_points[i]
 

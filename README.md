@@ -2,13 +2,13 @@
 
 Open source libary for prossing SAR images as python objects. Should be easy and simple to use but still very flexible.
 
-Environment for developing: conda create -n dev_sarpy numpy matplotlib rasterio scipy jupyter
+Environment for developing: conda create -c conda-forge -n dev_sarpy numpy matplotlib rasterio scipy jupyter lxml
 
 ## Dependencies
 * numpy
 * rasterio
 * lxml
-
+* scipy
 
 ## vision/ideas for developing
 * Install with conda-forge
