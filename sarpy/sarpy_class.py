@@ -1,6 +1,9 @@
 import numpy as np
+import copy
 import warnings
+import matplotlib.pyplot as plt
 from . import get_functions
+
 # TODO: Decide the amount of checking and control in the class
 
 
@@ -35,6 +38,81 @@ class SarImage:
         self.geo_tie_point = geo_tie_point
         self.band_meta = band_meta
         # Note that SlC is in strips. Maybe load as list of images
+
+    def __repr__(self):
+        return "Mission: %s \n Bands: %s" % (self.mission, str(self.band_names))
+
+    def __getitem__(self, key):
+        # Overload the get and slicing function a[2,4] a[:10,3:34]
+
+        # Check i 2 dimension are given
+        if len(key) != 2:
+            raise ValueError('Need to slice both column and row like test_image[:,:]')
+
+        # Get values as array
+        if isinstance(key[0], int) & isinstance(key[1], int):
+            return [band[key] for band in self.bands]
+
+        if not isinstance(key[0], slice) & isinstance(key[1], slice):
+            raise ValueError('Only get at slice is supported: a[2,4] a[:10,3:34]')
+
+        # Else. Try to slice the image
+        slice_row = key[0]
+        slice_column = key[1]
+
+        row_start = slice_row.start
+        row_step = slice_row.step
+        row_stop = slice_row.stop
+
+        column_start = slice_column.start
+        column_step = slice_column.step
+        column_stop = slice_column.stop
+
+        if row_start is None:
+            row_start = 0
+        if row_step is None:
+            row_step = 1
+        if row_stop is None:
+            row_stop = self.bands[0].shape[0]
+        if column_start is None:
+            column_start = 0
+        if column_step is None:
+            column_step = 1
+        if column_stop is None:
+            column_stop = self.bands[0].shape[1]
+
+        # Adjust footprint to window
+        footprint_lat = np.zeros(4)
+        footprint_long = np.zeros(4)
+
+        window = ((row_start, row_stop), (column_start, column_stop))
+
+        for i in range(2):
+            for j in range(2):
+                lat_i, long_i = self.get_coordinate(window[0][i], window[1][j])
+                footprint_lat[2 * i + j] = lat_i
+                footprint_long[2 * i + j] = long_i
+
+        footprint = {'latitude': footprint_lat, 'longitude': footprint_long}
+
+        # Adjust geo_tie_point, calibration
+        n_bands = len(self.bands)
+        geo_tie_point = copy.deepcopy(self.geo_tie_point)
+        calibration = copy.deepcopy(self.calibration)
+        for i in range(n_bands):
+            geo_tie_point[i]['row'] = (geo_tie_point[i]['row'] - row_start)/row_step
+            geo_tie_point[i]['column'] = (geo_tie_point[i]['column'] - column_start)/column_step
+
+            calibration[i]['row'] = (calibration[i]['row'] - row_start)/row_step
+            calibration[i]['column'] = (calibration[i]['column'] - column_start)/column_step
+
+        # slice the bands
+        bands = [band[key] for band in self.bands]
+
+        return SarImage(bands, mission=self.mission, time=self.time,
+                        footprint=footprint, product_meta=self.product_meta,
+                        band_names=self.band_names, calibration=calibration,
+                        geo_tie_point=geo_tie_point, band_meta=self.band_meta)
 
     def get_index(self, lat, long):
         """Get index of a location by interpolating grid-points
@@ -99,3 +177,24 @@ class SarImage:
 
         return lat.mean(), long.mean()
 
+    def simple_plot(self, band_index=0, q_max=0.95, stride=1, **kwargs):
+        """ Makes a simple image of band and a color bar.
+
+            Args:
+                band_index(int): index of the band to plot.
+                q_max(number): q_max is the quantile used to set the max of the color range for example
+                                q_max = 0.95 shows the lowest 95 percent of pixel values in the color range
+                stride(int): Used to skip pixels when showing. Good for large images.
+                **kwargs: Passed on to matplotlib imshow
+
+            Returns:
+
+            Raises:
+            """
+        v_max = np.quantile(self.bands[band_index].reshape(-1), q_max)
+
+        plt.imshow(self.bands[band_index][::stride, ::stride], vmax=v_max, **kwargs)
+        plt.colorbar()
+        plt.show()
+
+        return
