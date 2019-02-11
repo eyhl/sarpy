@@ -6,7 +6,7 @@ import rasterio
 
 from .sarpy_class import SarImage
 from . import s1
-from .get_functions import get_index, get_coordinate
+from .get_functions import get_index_v2, get_coordinate
 
 
 def sar_load(path, polarisation='all', location=None, size=None):
@@ -108,7 +108,7 @@ def sar_load(path, polarisation='all', location=None, size=None):
             long_grid = geo_tie_point[i]['longitude']
             row_grid = geo_tie_point[i]['row']
             column_grid = geo_tie_point[i]['column']
-            row[i], column[i] = get_index(location[0], location[1], lat_grid, long_grid, row_grid, column_grid)
+            row[i], column[i] = get_index_v2(location[0], location[1], lat_grid, long_grid, row_grid, column_grid)
         # check if index are the same for all bands
         if (abs(row.max() - row.min()) > 0.5) or (abs(column.max() - column.min()) > 0.5):
             warnings.warn('Warning different index found for each band. First index returned')
