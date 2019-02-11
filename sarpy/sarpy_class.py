@@ -137,7 +137,7 @@ class SarImage:
             long_grid = geo_tie_point[i]['longitude']
             row_grid = geo_tie_point[i]['row']
             column_grid = geo_tie_point[i]['column']
-            row[i], column[i] = get_functions.get_index(lat, long, lat_grid, long_grid, row_grid, column_grid)
+            row[i], column[i] = get_functions.get_index_v2(lat, long, lat_grid, long_grid, row_grid, column_grid)
 
         # check that the results are the same
         if (abs(row.max() - row.min()) > 0.5) or (abs(column.max() - column.min()) > 0.5):
