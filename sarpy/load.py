@@ -51,7 +51,7 @@ def sar_load(path, polarisation='all', location=None, size=None):
     ls_meas = os.listdir(measurement_path)
     tiff_files = [file[-4:] == 'tiff' for file in ls_meas]
     tiff_files = list(compress(ls_meas, tiff_files))
-    with warnings.catch_warnings():
+    with warnings.catch_warnings(): # Ignore the "NotGeoreferencedWarning" when opening the tiff
         warnings.simplefilter("ignore")
         measurement_temp = [rasterio.open(os.path.join(measurement_path, file)) for file in tiff_files]
 
