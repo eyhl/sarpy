@@ -52,33 +52,27 @@ def _load_calibration(path):
         warnings.warn('Error loading calibration list')
         return None, info
 
+    # get pixels from first vector
+    pixel = np.array(list(map(int, cal_vectors[0][2].text.split())))
     # initialize arrays
-    azimuth_time = np.array([], dtype='datetime64[us]')
-    line = np.array([], dtype=int)
-    pixel = np.array([], dtype=int)
-    sigma_0 = np.array([], dtype=float)
-    beta_0 = np.array([], dtype=float)
-    gamma = np.array([], dtype=float)
-    dn = np.array([], dtype=float)
+    azimuth_time = np.empty([len(cal_vectors),len(pixel)], dtype='datetime64[us]')
+    line = np.empty([len(cal_vectors)], dtype=int)
+    sigma_0 = np.empty([len(cal_vectors),len(pixel)], dtype=float)
+    beta_0 = np.empty([len(cal_vectors),len(pixel)], dtype=float)
+    gamma = np.empty([len(cal_vectors),len(pixel)], dtype=float)
+    dn = np.empty([len(cal_vectors),len(pixel)], dtype=float)
 
     # get data
-    for cal_vec in cal_vectors:
-        azimuth_time_i = np.datetime64(cal_vec[0].text)
-        line_i = int(cal_vec[1].text)
+    for i, cal_vec in enumerate(cal_vectors):
         pixel_i = np.array(list(map(int, cal_vec[2].text.split())))
-        sigma_0_i = np.array(list(map(float, cal_vec[3].text.split())))
-        beta_0_i = np.array(list(map(float, cal_vec[4].text.split())))
-        gamma_i = np.array(list(map(float, cal_vec[5].text.split())))
-        dn_i = np.array(list(map(float, cal_vec[6].text.split())))
-
-        # append the data
-        azimuth_time = np.append(azimuth_time_i, np.repeat(azimuth_time_i, len(pixel_i)))
-        line = np.append(line, np.repeat(line_i, len(pixel_i)))
-        pixel = np.append(pixel, pixel_i)
-        sigma_0 = np.append(sigma_0, sigma_0_i)
-        beta_0 = np.append(beta_0, beta_0_i)
-        gamma = np.append(gamma, gamma_i)
-        dn = np.append(dn, dn_i)
+        if not np.array_equal(pixel,pixel_i):
+            warnings.warn('Warning in _load_calibration. The calibration data is not on a proper grid')
+        azimuth_time[i,:] = np.datetime64(cal_vec[0].text)
+        line[i] = int(cal_vec[1].text)
+        sigma_0[i,:] = np.array(list(map(float, cal_vec[3].text.split())))
+        beta_0[i,:] = np.array(list(map(float, cal_vec[4].text.split())))
+        gamma[i,:] = np.array(list(map(float, cal_vec[5].text.split())))
+        dn[i,:] = np.array(list(map(float, cal_vec[6].text.split())))
 
     # Combine calibration info
     calibration = {

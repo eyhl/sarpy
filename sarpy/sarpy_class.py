@@ -3,6 +3,7 @@ import copy
 import warnings
 import matplotlib.pyplot as plt
 from . import get_functions
+from . import tools
 
 # TODO: Decide the amount of checking and control in the class
 
@@ -198,3 +199,28 @@ class SarImage:
         plt.show()
 
         return
+
+    def calibrate(self, mode='gamma', tiles=4):
+        """Get coordinate from index by interpolating grid-points
+
+        Args:
+            mode(string): 'sigma_0', 'beta' or 'gamma'
+            tiles(int): number of tiles the image is divided into. This saves memory but reduce speed a bit
+
+        Returns:
+            Calibrated image as (SarImage)
+
+        Raises:
+        """
+        calibrated_bands = []
+        for i, band in enumerate(self.bands):
+            row = self.calibration[i]['row']
+            column = self.calibration[i]['column']
+            calibration_values = self.calibration[i][mode]
+            calibrated_bands.append(tools.calibration(band, row, column, calibration_values, tiles=tiles))
+
+        return SarImage(calibrated_bands, mission=self.mission, time=self.time,
+                        footprint=self.footprint, product_meta=self.product_meta,
+                        band_names=self.band_names, calibration=self.calibration,
+                        geo_tie_point=self.geo_tie_point, band_meta=self.band_meta)
+
