@@ -26,7 +26,7 @@ class SarImage:
     """
 
     def __init__(self, bands, mission=None, time=None, footprint=None, product_meta=None,
-                 band_names=None, calibration=None, geo_tie_point=None, band_meta=None, **kwargs):
+                 band_names=None, calibration=None, geo_tie_point=None, band_meta=None, unit=None):
 
         # assign values
         self.bands = bands
@@ -38,6 +38,7 @@ class SarImage:
         self.calibration = calibration
         self.geo_tie_point = geo_tie_point
         self.band_meta = band_meta
+        self.unit = unit
         # Note that SlC is in strips. Maybe load as list of images
 
     def __repr__(self):
@@ -212,6 +213,9 @@ class SarImage:
 
         Raises:
         """
+        if 'raw' not in self.unit:
+            warnings.warn('Raw is not in units. The image have all ready been calibrated')
+        
         calibrated_bands = []
         for i, band in enumerate(self.bands):
             row = self.calibration[i]['row']
@@ -222,5 +226,42 @@ class SarImage:
         return SarImage(calibrated_bands, mission=self.mission, time=self.time,
                         footprint=self.footprint, product_meta=self.product_meta,
                         band_names=self.band_names, calibration=self.calibration,
-                        geo_tie_point=self.geo_tie_point, band_meta=self.band_meta)
+                        geo_tie_point=self.geo_tie_point, band_meta=self.band_meta,
+                        unit=mode)
+
+    def to_db(self):
+        """Convert  to decibel
+                """
+        db_bands = []
+        for band in self.bands:
+            if 'amplitude' in self.unit:
+                db_bands.append(20*np.log(band))
+            else:
+                db_bands.append(10 * np.log(band))
+
+        return SarImage(db_bands, mission=self.mission, time=self.time,
+                        footprint=self.footprint, product_meta=self.product_meta,
+                        band_names=self.band_names, calibration=self.calibration,
+                        geo_tie_point=self.geo_tie_point, band_meta=self.band_meta,
+                        unit=(self.unit+' dB'))
+
+    def boxcar(self, kernel_size, **kwargs):
+        """Simple (kernel_size x kernel_size) boxcar filter.
+            Args:
+                kernel_size(int): size of kernel
+                **kwargs: Additional arguments passed to scipy.ndimage.convolve
+
+            Returns:
+                Filtered image
+        """
+
+        filter_bands = []
+        for band in self.bands:
+            filter_bands.append(tools.boxcar(band, kernel_size, **kwargs))
+
+        return SarImage(filter_bands, mission=self.mission, time=self.time,
+                        footprint=self.footprint, product_meta=self.product_meta,
+                        band_names=self.band_names, calibration=self.calibration,
+                        geo_tie_point=self.geo_tie_point, band_meta=self.band_meta,
+                        unit=self.unit)
 

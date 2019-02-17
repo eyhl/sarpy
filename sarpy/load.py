@@ -174,4 +174,4 @@ def sar_load(path, polarisation='all', location=None, size=None):
     return SarImage(bands, mission=meta['mission'], time=meta['start_time'],
                     footprint=meta['footprint'], product_meta=meta,
                     band_names=polarisation, calibration=calibration,
-                    geo_tie_point=geo_tie_point, band_meta=band_meta)
+                    geo_tie_point=geo_tie_point, band_meta=band_meta, unit='raw amplitude')
