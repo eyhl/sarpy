@@ -1,5 +1,7 @@
 import numpy as np
 import copy
+import os
+import pickle
 import warnings
 import matplotlib.pyplot as plt
 from . import get_functions
@@ -264,4 +266,90 @@ class SarImage:
                         band_names=self.band_names, calibration=self.calibration,
                         geo_tie_point=self.geo_tie_point, band_meta=self.band_meta,
                         unit=self.unit)
+
+    def save(self, path):
+        """Save the SarImage object in a folder at path.
+            Args:
+                path(str): Path of the folder where the the SarImage is saved.
+                        Note that the folder is created and must not exist in advance
+            Raises:
+                ValueError: There already exist a folder at path
+        """
+
+        # Check if folder exists
+        if os.path.exists(path):
+            print('please give a path that is not used')
+            raise ValueError
+
+        # make folder
+        os.makedirs(path)
+
+        # save elements in separate files
+
+        # product_meta
+        file_path = os.path.join(path, 'product_meta.pkl')
+        pickle.dump(self.product_meta, open(file_path, "wb"))
+
+        # unit
+        file_path = os.path.join(path, 'unit.pkl')
+        pickle.dump(self.unit, open(file_path, "wb"))
+
+        # footprint
+        file_path = os.path.join(path, 'footprint.pkl')
+        pickle.dump(self.footprint, open(file_path, "wb"))
+
+        # geo_tie_point
+        file_path = os.path.join(path, 'geo_tie_point.pkl')
+        pickle.dump(self.geo_tie_point, open(file_path, "wb"))
+
+        # band_names
+        file_path = os.path.join(path, 'band_names.pkl')
+        pickle.dump(self.band_names, open(file_path, "wb"))
+
+        # band_meta
+        file_path = os.path.join(path, 'band_meta.pkl')
+        pickle.dump(self.band_meta, open(file_path, "wb"))
+
+        # bands
+        file_path = os.path.join(path, 'bands.pkl')
+        pickle.dump(self.bands, open(file_path, "wb"))
+
+        # reduce size of calibration list
+        reduced_calibration = []
+        for i in range(len(self.bands)):
+            cal = self.calibration[i]
+
+            # Get mask of rows in the image.
+            index_row = (0 < cal['row']) & (cal['row'] < self.bands[i].shape[0])
+            # Include one extra row on each side of the image to ensure interpolation
+            index_row[1:] = index_row[1:] + index_row[:-1]
+            index_row[:-1] = index_row[:-1] + index_row[1:]
+
+            # Get mask of column in the image
+            index_column = (0 < cal['column']) & (cal['column'] < self.bands[i].shape[1])
+            # Include one extra column on each side of the image to ensure interpolation
+            index_column[1:] = index_column[1:] + index_column[:-1]
+            index_column[:-1] = index_column[:-1] + index_column[1:]
+
+            # Get the relevant calibration values
+            reduced_cal_i = {
+                "abs_calibration_const": cal["abs_calibration_const"],
+                "row": cal["row"][index_row],
+                "column": cal["column"][index_column],
+                "azimuth_time": cal["azimuth_time"][index_row, :][:, index_column],
+                "sigma_0": cal["sigma_0"][index_row, :][:, index_column],
+                "beta_0": cal["beta_0"][index_row, :][:, index_column],
+                "gamma": cal["gamma"][index_row, :][:, index_column],
+                "dn": cal["dn"][index_row, :][:, index_column]
+            }
+
+            reduced_calibration.append(reduced_cal_i)
+
+        # calibration
+        file_path = os.path.join(path, 'calibration.pkl')
+        pickle.dump(reduced_calibration, open(file_path, "wb"))
+
+        return
+
+
 

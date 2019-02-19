@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pickle
 import warnings
 from itertools import compress
 import rasterio
@@ -9,7 +10,7 @@ from . import s1
 from .get_functions import get_index_v2, get_coordinate
 
 
-def sar_load(path, polarisation='all', location=None, size=None):
+def s1_load(path, polarisation='all', location=None, size=None):
     """Function to load SAR image into SarImage python object.
         Currently supports: unzipped Sentinel 1 GRDH products
 
@@ -175,3 +176,52 @@ def sar_load(path, polarisation='all', location=None, size=None):
                     footprint=meta['footprint'], product_meta=meta,
                     band_names=polarisation, calibration=calibration,
                     geo_tie_point=geo_tie_point, band_meta=band_meta, unit='raw amplitude')
+
+
+def load(path):
+    """ Load SarImage saved with the SarImage save method (img.save(path)).
+
+        Args:
+            path(str): Path to the folder where SarImage is saved.
+
+        Returns:
+            SarImage
+        """
+
+    # product_meta
+    file_path = os.path.join(path,'product_meta.pkl')
+    product_meta = pickle.load( open( file_path, "rb" ) )
+
+    # unit
+    file_path = os.path.join(path,'unit.pkl')
+    unit = pickle.load( open( file_path, "rb" ) )
+
+    # footprint
+    file_path = os.path.join(path,'footprint.pkl')
+    footprint = pickle.load(open( file_path, "rb" ) )
+
+    # geo_tie_point
+    file_path = os.path.join(path,'geo_tie_point.pkl')
+    geo_tie_point= pickle.load( open( file_path, "rb" ) )
+
+    # band_names
+    file_path = os.path.join(path,'band_names.pkl')
+    band_names = pickle.load(open( file_path, "rb" ) )
+
+    # band_meta
+    file_path = os.path.join(path,'band_meta.pkl')
+    band_meta = pickle.load(open( file_path, "rb" ) )
+
+    # bands
+    file_path = os.path.join(path,'bands.pkl')
+    bands = pickle.load(open( file_path, "rb" ) )
+
+    # calibration
+    file_path = os.path.join(path,'calibration.pkl')
+    calibration = pickle.load(open( file_path, "rb" ) )
+    
+    return SarImage(bands, mission=product_meta['mission'], time=product_meta['start_time'],
+                    footprint=footprint, product_meta=product_meta,
+                    band_names=band_names, calibration=calibration,
+                    geo_tie_point=geo_tie_point, band_meta=band_meta, unit=unit)
+
