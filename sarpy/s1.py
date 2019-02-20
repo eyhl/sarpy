@@ -6,16 +6,16 @@ import datetime
 import lxml.etree
 
 def _load_calibration(path):
-    """Load sentinel 1 calibration file as dictionary from PATH.
+    """Load sentinel 1 calibration_table file as dictionary from PATH.
 
-    The calibration file should be as included in .SAFE format
+    The calibration_table file should be as included in .SAFE format
     retrieved from: https://scihub.copernicus.eu/
 
     Args:
-        path: The path to the calibration file
+        path: The path to the calibration_table file
 
     Returns:
-        calibration: A dictionary with calibration constants
+        calibration_table: A dictionary with calibration_table constants
             {"abs_calibration_const": float(),
             "row": np.array(int),
             "column": np.array(int),
@@ -44,12 +44,12 @@ def _load_calibration(path):
         warnings.warn('Warning adsHeader not found')
         info = None
 
-    # Find calibration list
+    # Find calibration_table list
     cal_vectors = root.findall('calibrationVectorList')
     if len(cal_vectors) == 1:
         cal_vectors = cal_vectors[0]
     else:
-        warnings.warn('Error loading calibration list')
+        warnings.warn('Error loading calibration_table list')
         return None, info
 
     # get pixels from first vector
@@ -66,7 +66,7 @@ def _load_calibration(path):
     for i, cal_vec in enumerate(cal_vectors):
         pixel_i = np.array(list(map(int, cal_vec[2].text.split())))
         if not np.array_equal(pixel,pixel_i):
-            warnings.warn('Warning in _load_calibration. The calibration data is not on a proper grid')
+            warnings.warn('Warning in _load_calibration. The calibration_table data is not on a proper grid')
         azimuth_time[i,:] = np.datetime64(cal_vec[0].text)
         line[i] = int(cal_vec[1].text)
         sigma_0[i,:] = np.array(list(map(float, cal_vec[3].text.split())))
@@ -74,8 +74,8 @@ def _load_calibration(path):
         gamma[i,:] = np.array(list(map(float, cal_vec[5].text.split())))
         dn[i,:] = np.array(list(map(float, cal_vec[6].text.split())))
 
-    # Combine calibration info
-    calibration = {
+    # Combine calibration_table info
+    calibration_table = {
         "abs_calibration_const": float(root[1][0].text),
         "row": line,
         "column": pixel,
@@ -86,7 +86,7 @@ def _load_calibration(path):
         "dn": dn,
     }
 
-    return calibration, info
+    return calibration_table, info
 
 
 def _load_meta(SAFE_path):
@@ -431,7 +431,7 @@ def _load_annotation(path):
         incidence_angle[i] = float(point[7].text)
         elevation_angle[i] = float(point[8].text)
 
-    # Combine calibration info
+    # Combine geo_locations info
     geo_locations = {
         'azimuth_time': azimuth_time,
         'slant_range_time': slant_range_time,

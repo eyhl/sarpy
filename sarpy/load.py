@@ -40,7 +40,7 @@ def s1_load(path, polarisation='all', location=None, size=None):
     xml_files = list(compress(ls_annotation, xml_files))
     annotation_temp = [s1._load_annotation(os.path.join(path, 'annotation', file)) for file in xml_files]
 
-    # calibration
+    # calibration_tables
     path_cal = os.path.join(path, 'annotation', 'calibration')
     ls_cal = os.listdir(path_cal)
     cal_files = [file[:11] == 'calibration' for file in ls_cal]
@@ -64,7 +64,7 @@ def s1_load(path, polarisation='all', location=None, size=None):
 
     # only take bands of interest and sort
     n_bands = len(polarisation)
-    calibration = [None] * n_bands
+    calibration_tables = [None] * n_bands
     geo_tie_point = [None] * n_bands
     band_meta = [None] * n_bands
     measurement = [None] * n_bands
@@ -77,7 +77,7 @@ def s1_load(path, polarisation='all', location=None, size=None):
 
         for band in calibration_temp:
             if band[1]['polarisation'] == polarisation[i]:
-                calibration[i] = band[0]
+                calibration_tables[i] = band[0]
 
         for band in annotation_temp:
             if band[1]['polarisation'] == polarisation[i]:
@@ -161,20 +161,20 @@ def s1_load(path, polarisation='all', location=None, size=None):
         meta['footprint']['latitude'] = footprint_lat
         meta['footprint']['longitude'] = footprint_long
 
-        # Adjust geo_tie_point, calibration
+        # Adjust geo_tie_point, calibration_tables
         for i in range(n_bands):
             geo_tie_point[i]['row'] = geo_tie_point[i]['row'] - row_index_min
             geo_tie_point[i]['column'] = geo_tie_point[i]['column'] - column_index_min
 
-            calibration[i]['row'] = calibration[i]['row'] - row_index_min
-            calibration[i]['column'] = calibration[i]['column'] - column_index_min
+            calibration_tables[i]['row'] = calibration_tables[i]['row'] - row_index_min
+            calibration_tables[i]['column'] = calibration_tables[i]['column'] - column_index_min
 
         # load the data window
         bands = [image.read(1, window=window) for image in measurement]
 
     return SarImage(bands, mission=meta['mission'], time=meta['start_time'],
                     footprint=meta['footprint'], product_meta=meta,
-                    band_names=polarisation, calibration=calibration,
+                    band_names=polarisation, calibration_tables=calibration_tables,
                     geo_tie_point=geo_tie_point, band_meta=band_meta, unit='raw amplitude')
 
 
@@ -216,12 +216,12 @@ def load(path):
     file_path = os.path.join(path,'bands.pkl')
     bands = pickle.load(open( file_path, "rb" ) )
 
-    # calibration
-    file_path = os.path.join(path,'calibration.pkl')
-    calibration = pickle.load(open( file_path, "rb" ) )
+    # calibration_tables
+    file_path = os.path.join(path,'calibration_tables.pkl')
+    calibration_tables = pickle.load(open( file_path, "rb" ) )
     
     return SarImage(bands, mission=product_meta['mission'], time=product_meta['start_time'],
                     footprint=footprint, product_meta=product_meta,
-                    band_names=band_names, calibration=calibration,
+                    band_names=band_names, calibration_tables=calibration_tables,
                     geo_tie_point=geo_tie_point, band_meta=band_meta, unit=unit)
 

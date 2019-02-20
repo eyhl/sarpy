@@ -22,13 +22,13 @@ class SarImage:
                                     'longitude': np.array}
         product_meta(dict): Dictionary with meta data.
         band_names(list of str): Names of the band. Normally the polarisation.
-        calibration(list of dict): Dictionary with calibration information for each band.
+        calibration_tables(list of dict): Dictionary with calibration_tables information for each band.
         geo_tie_point(list of dict): Dictionary with geo tie point for each band.
         band_meta(list of dict): Dictionary with meta data for each band.
     """
 
     def __init__(self, bands, mission=None, time=None, footprint=None, product_meta=None,
-                 band_names=None, calibration=None, geo_tie_point=None, band_meta=None, unit=None):
+                 band_names=None, calibration_tables=None, geo_tie_point=None, band_meta=None, unit=None):
 
         # assign values
         self.bands = bands
@@ -37,7 +37,7 @@ class SarImage:
         self.footprint = footprint
         self.product_meta = product_meta
         self.band_names = band_names
-        self.calibration = calibration
+        self.calibration_tables = calibration_tables
         self.geo_tie_point = geo_tie_point
         self.band_meta = band_meta
         self.unit = unit
@@ -99,23 +99,23 @@ class SarImage:
 
         footprint = {'latitude': footprint_lat, 'longitude': footprint_long}
 
-        # Adjust geo_tie_point, calibration
+        # Adjust geo_tie_point, calibration_tables
         n_bands = len(self.bands)
         geo_tie_point = copy.deepcopy(self.geo_tie_point)
-        calibration = copy.deepcopy(self.calibration)
+        calibration_tables = copy.deepcopy(self.calibration_tables)
         for i in range(n_bands):
             geo_tie_point[i]['row'] = (geo_tie_point[i]['row'] - row_start)/row_step
             geo_tie_point[i]['column'] = (geo_tie_point[i]['column'] - column_start)/column_step
 
-            calibration[i]['row'] = (calibration[i]['row'] - row_start)/row_step
-            calibration[i]['column'] = (calibration[i]['column'] - column_start)/column_step
+            calibration_tables[i]['row'] = (calibration_tables[i]['row'] - row_start)/row_step
+            calibration_tables[i]['column'] = (calibration_tables[i]['column'] - column_start)/column_step
 
         # slice the bands
         bands = [band[key] for band in self.bands]
 
         return SarImage(bands, mission=self.mission, time=self.time,
                         footprint=footprint, product_meta=self.product_meta,
-                        band_names=self.band_names, calibration=calibration,
+                        band_names=self.band_names, calibration_tables=calibration_tables,
                         geo_tie_point=geo_tie_point, band_meta=self.band_meta)
 
     def get_index(self, lat, long):
@@ -220,14 +220,14 @@ class SarImage:
         
         calibrated_bands = []
         for i, band in enumerate(self.bands):
-            row = self.calibration[i]['row']
-            column = self.calibration[i]['column']
-            calibration_values = self.calibration[i][mode]
+            row = self.calibration_tables[i]['row']
+            column = self.calibration_tables[i]['column']
+            calibration_values = self.calibration_tables[i][mode]
             calibrated_bands.append(tools.calibration(band, row, column, calibration_values, tiles=tiles))
 
         return SarImage(calibrated_bands, mission=self.mission, time=self.time,
                         footprint=self.footprint, product_meta=self.product_meta,
-                        band_names=self.band_names, calibration=self.calibration,
+                        band_names=self.band_names, calibration_tables=self.calibration_tables,
                         geo_tie_point=self.geo_tie_point, band_meta=self.band_meta,
                         unit=mode)
 
@@ -243,7 +243,7 @@ class SarImage:
 
         return SarImage(db_bands, mission=self.mission, time=self.time,
                         footprint=self.footprint, product_meta=self.product_meta,
-                        band_names=self.band_names, calibration=self.calibration,
+                        band_names=self.band_names, calibration_tables=self.calibration_tables,
                         geo_tie_point=self.geo_tie_point, band_meta=self.band_meta,
                         unit=(self.unit+' dB'))
 
@@ -263,7 +263,7 @@ class SarImage:
 
         return SarImage(filter_bands, mission=self.mission, time=self.time,
                         footprint=self.footprint, product_meta=self.product_meta,
-                        band_names=self.band_names, calibration=self.calibration,
+                        band_names=self.band_names, calibration_tables=self.calibration_tables,
                         geo_tie_point=self.geo_tie_point, band_meta=self.band_meta,
                         unit=self.unit)
 
@@ -314,10 +314,10 @@ class SarImage:
         file_path = os.path.join(path, 'bands.pkl')
         pickle.dump(self.bands, open(file_path, "wb"))
 
-        # reduce size of calibration list
+        # reduce size of calibration_tables list
         reduced_calibration = []
         for i in range(len(self.bands)):
-            cal = self.calibration[i]
+            cal = self.calibration_tables[i]
 
             # Get mask of rows in the image.
             index_row = (0 < cal['row']) & (cal['row'] < self.bands[i].shape[0])
@@ -331,7 +331,7 @@ class SarImage:
             index_column[1:] = index_column[1:] + index_column[:-1]
             index_column[:-1] = index_column[:-1] + index_column[1:]
 
-            # Get the relevant calibration values
+            # Get the relevant calibration_tables values
             reduced_cal_i = {
                 "abs_calibration_const": cal["abs_calibration_const"],
                 "row": cal["row"][index_row],
@@ -345,8 +345,8 @@ class SarImage:
 
             reduced_calibration.append(reduced_cal_i)
 
-        # calibration
-        file_path = os.path.join(path, 'calibration.pkl')
+        # calibration_tables
+        file_path = os.path.join(path, 'calibration_tables.pkl')
         pickle.dump(reduced_calibration, open(file_path, "wb"))
 
         return
@@ -359,13 +359,13 @@ class SarImage:
 
         band = self.bands.pop(index)
         name = self.band_names.pop(index)
-        calibration = self.calibration.pop(index)
+        calibration_tables = self.calibration_tables.pop(index)
         geo_tie_point = self.geo_tie_point.pop(index)
         band_meta = self.band_meta.pop()
 
         return SarImage([band], mission=self.mission, time=self.time,
                         footprint=self.footprint, product_meta=self.product_meta,
-                        band_names=[name], calibration=[calibration],
+                        band_names=[name], calibration_tables=[calibration_tables],
                         geo_tie_point=[geo_tie_point], band_meta=[band_meta],
                         unit=self.unit)
 
@@ -376,12 +376,12 @@ class SarImage:
 
         band = self.bands[index]
         name = self.band_names[index]
-        calibration = self.calibration[index]
+        calibration_tables = self.calibration_tables[index]
         geo_tie_point = self.geo_tie_point[index]
         band_meta = self.band_meta[index]
 
         return SarImage([band], mission=self.mission, time=self.time,
                         footprint=self.footprint, product_meta=self.product_meta,
-                        band_names=[name], calibration=[calibration],
+                        band_names=[name], calibration_tables=[calibration_tables],
                         geo_tie_point=[geo_tie_point], band_meta=[band_meta],
                         unit=self.unit)
