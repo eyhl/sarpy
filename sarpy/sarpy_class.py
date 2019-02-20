@@ -369,4 +369,19 @@ class SarImage:
                         geo_tie_point=[geo_tie_point], band_meta=[band_meta],
                         unit=self.unit)
 
+    def get_band(self, index):
+        """
+        Return SarImage of band at index (default last).
+        """
 
+        band = self.bands[index]
+        name = self.band_names[index]
+        calibration = self.calibration[index]
+        geo_tie_point = self.geo_tie_point[index]
+        band_meta = self.band_meta[index]
+
+        return SarImage([band], mission=self.mission, time=self.time,
+                        footprint=self.footprint, product_meta=self.product_meta,
+                        band_names=[name], calibration=[calibration],
+                        geo_tie_point=[geo_tie_point], band_meta=[band_meta],
+                        unit=self.unit)
