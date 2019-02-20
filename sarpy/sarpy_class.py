@@ -351,5 +351,22 @@ class SarImage:
 
         return
 
+    def pop(self, index=-1):
+        """
+        Remove and return band at index (default last).
+        Raises IndexError if list is empty or index is out of range.
+        """
+
+        band = self.bands.pop(index)
+        name = self.band_names.pop(index)
+        calibration = self.calibration.pop(index)
+        geo_tie_point = self.geo_tie_point.pop(index)
+        band_meta = self.band_meta.pop()
+
+        return SarImage([band], mission=self.mission, time=self.time,
+                        footprint=self.footprint, product_meta=self.product_meta,
+                        band_names=[name], calibration=[calibration],
+                        geo_tie_point=[geo_tie_point], band_meta=[band_meta],
+                        unit=self.unit)
 
 
